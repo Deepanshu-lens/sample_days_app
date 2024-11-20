@@ -1,7 +1,7 @@
 // src/components/DateCalculator.jsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import {
   format,
@@ -29,10 +29,25 @@ const DateCalculator = () => {
     ST: true, // Saturday
   });
 
-  const handleDateClick = (date) => {
+  useEffect(() => {
+    if (includeAllDays) {
+      setSelectedDays({
+        SU: true, // Sunday
+        M: true, // Monday
+        T: true, // Tuesday
+        W: true, // Wednesday
+        TH: true, // Thursday
+        F: true, // Friday
+        ST: true, // Saturday
+      });
+    }
+  }, [includeAllDays]);
+
+  // src/components/DateCalculator.jsx
+  const handleDateClick = (dayKey) => {
     setSelectedDays((prev) => ({
       ...prev,
-      [format(date, "E").toUpperCase()]: !prev[format(date, "E").toUpperCase()],
+      [dayKey]: !prev[dayKey], // Toggle the selected state
     }));
   };
 
@@ -66,14 +81,11 @@ const DateCalculator = () => {
       }
     }
 
-    // Adjust the result based on includeAllDays
-    setResult(includeAllDays ? daysBetween : Math.max(daysBetween - 1, 0));
-  };
+    console.log(daysBetween, "day between");
 
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  });
+    // Adjust the result based on includeAllDays
+    setResult(includeAllDays ? daysBetween : Math.max(daysBetween, 0));
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
@@ -86,7 +98,7 @@ const DateCalculator = () => {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="p-2 border border-gray-300 rounded w-full"
+            className="p-2 border border-gray-300 rounded w-full focus:border-[#00AA00]"
           />
         </div>
         <div className="mb-4">
@@ -98,20 +110,13 @@ const DateCalculator = () => {
             className="p-2 border border-gray-300 rounded w-full"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Or select an event: (optional)
-          </label>
-          <select
-            value={event}
-            onChange={(e) => setEvent(e.target.value)}
-            className="p-2 border border-gray-300 rounded w-full"
-          >
-            <option value="">---</option>
-            <option value="event1">Event 1</option>
-            <option value="event2">Event 2</option>
-            <option value="event3">Event 3</option>
-          </select>
+        <div className="flex items-center mb-4">
+          <label className="mr-2">Include end day?</label>
+          <Switch
+            checked={includeEndDay}
+            onCheckedChange={() => setIncludeEndDay(!includeEndDay)}
+            className="toggle toggle-primary" // Add your color theme class here
+          />
         </div>
         <div className="flex items-center mb-4">
           <label className="mr-2">Include all days?</label>
@@ -121,40 +126,28 @@ const DateCalculator = () => {
             className="toggle toggle-primary" // Add your color theme class here
           />
         </div>
-        <div className="flex items-center mb-4">
-          <label className="mr-2">Include end day?</label>
-          <Switch
-            checked={includeEndDay}
-            onCheckedChange={() => setIncludeEndDay(!includeEndDay)}
-            className="toggle toggle-primary" // Add your color theme class here
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Days to include:
-          </label>
-          <div className="flex space-x-2">
-            {["SU", "M", "T", "W", "TH", "F", "ST"].map((day, i) => (
-              <button
-                key={i}
-                onClick={() =>
-                  handleDateClick(
-                    new Date(
-                      currentDate.getFullYear(),
-                      currentDate.getMonth(),
-                      i + 1
-                    )
-                  )
-                }
-                className={`p-2 border rounded ${
-                  selectedDays[day] ? "bg-[#00AA00] text-white" : "bg-gray-200"
-                }`}
-              >
-                {day}
-              </button>
-            ))}
+        {!includeAllDays && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">
+              Days to include:
+            </label>
+            <div className="flex space-x-2">
+              {["SU", "M", "T", "W", "TH", "F", "ST"].map((day, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleDateClick(day)}
+                  className={`p-2 border rounded ${
+                    selectedDays[day]
+                      ? "bg-[#00AA00] text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         <button
           onClick={calculateDays}
           className="bg-green-500 text-white p-2 rounded w-full hover:bg-green-600 transition"
